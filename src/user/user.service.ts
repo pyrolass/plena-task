@@ -116,7 +116,14 @@ export class UserService {
     });
   }
 
-  async getUser(username: string, min_age: number, max_age: number, user_id) {
+  async getUser(username: string) {
+    return this.userModel.findOne({
+      username: username,
+      is_delete: false,
+    });
+  }
+
+  async getUsers(username: string, min_age: number, max_age: number, user_id) {
     const currentDate = new Date();
     const pipeline = [];
 
@@ -129,6 +136,7 @@ export class UserService {
     pipeline.push({
       $match: {
         _id: { $nin: blockedUsers },
+        is_delete: false,
       },
     });
 
