@@ -19,6 +19,6 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
   mongo:
     image: mongo:latest
-    container_name: some-mongo
+    container_name: plena-mongo
     ports:
       - '27017:27017'
