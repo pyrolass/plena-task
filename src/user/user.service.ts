@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { SignUpRequestDto, SignUpResponseDto } from './dto/SignUpDto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/schemas/User.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { SignInRequestDto, SignInResponseDto } from './dto/SignInDto';
 import { UpdateUserDto } from './dto/UpdateUserDto';
@@ -116,9 +116,21 @@ export class UserService {
     });
   }
 
-  async getUser(username: string, minAge: number, maxAge: number) {
+  async getUser(username: string, min_age: number, max_age: number, user_id) {
     const currentDate = new Date();
     const pipeline = [];
+
+    const currentUser = await this.userModel.findById(user_id);
+
+    const blockedUsers = currentUser.blocked_users.map(
+      (id) => new mongoose.Types.ObjectId(id),
+    );
+
+    pipeline.push({
+      $match: {
+        _id: { $nin: blockedUsers },
+      },
+    });
 
     if (username) {
       pipeline.push({
@@ -142,25 +154,25 @@ export class UserService {
       },
     });
 
-    if (minAge && !maxAge) {
+    if (min_age && !max_age) {
       pipeline.push({
         $match: {
-          age: { $gte: minAge * 1 },
+          age: { $gte: min_age * 1 },
         },
       });
     }
 
-    if (maxAge && !minAge) {
+    if (max_age && !min_age) {
       pipeline.push({
         $match: {
-          age: { $lte: maxAge * 1 },
+          age: { $lte: max_age * 1 },
         },
       });
     }
 
-    if (minAge && maxAge) {
+    if (min_age && max_age) {
       pipeline.push({
-        $match: { age: { $gte: minAge * 1, $lte: maxAge * 1 } },
+        $match: { age: { $gte: min_age * 1, $lte: max_age * 1 } },
       });
     }
 

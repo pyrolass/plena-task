@@ -21,13 +21,17 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('/search')
+  @UseGuards(AuthGuard)
   handleGet(
     @Query('username') username: string,
     @Query('min_age') minAge: number,
     @Query('max_age') maxAge: number,
+    @Request() req,
   ) {
+    const { user_id } = req.user;
+
     try {
-      return this.userService.getUser(username, minAge, maxAge);
+      return this.userService.getUser(username, minAge, maxAge, user_id);
     } catch (e) {
       throw e;
     }
