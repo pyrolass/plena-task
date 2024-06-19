@@ -2,7 +2,7 @@
 
 .PHONY: docker-compose
 
-docker-compose:
+docker:
 	docker-compose up -d
 	
 run:
