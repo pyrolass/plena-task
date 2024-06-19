@@ -4,6 +4,7 @@ import { UserService } from './user.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/schemas/User.schema';
 import { JwtModule } from '@nestjs/jwt';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   controllers: [UserController],
@@ -13,6 +14,7 @@ import { JwtModule } from '@nestjs/jwt';
       secret: 'verysecretkey',
       signOptions: { expiresIn: '30d' },
     }),
+    RedisModule,
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
 })

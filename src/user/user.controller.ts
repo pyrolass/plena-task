@@ -8,6 +8,7 @@ import {
   Query,
   Request,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { SignUpRequestDto } from './dto/SignUpDto';
 import { UserService } from './user.service';
@@ -15,14 +16,25 @@ import { SignInRequestDto } from './dto/SignInDto';
 import { UpdateUserDto } from './dto/UpdateUserDto';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { BlockUserDto } from './dto/BlockUserDto';
+import { RedisInterceptor } from 'src/redis/redis.interceptor';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get('/')
+  @UseInterceptors(RedisInterceptor)
+  handleGetUser(@Query('username') username: string) {
+    try {
+      return this.userService.getUser(username);
+    } catch (e) {
+      throw e;
+    }
+  }
+
   @Get('/search')
   @UseGuards(AuthGuard)
-  handleGet(
+  handleGetUsers(
     @Query('username') username: string,
     @Query('min_age') minAge: number,
     @Query('max_age') maxAge: number,
@@ -31,7 +43,7 @@ export class UserController {
     const { user_id } = req.user;
 
     try {
-      return this.userService.getUser(username, minAge, maxAge, user_id);
+      return this.userService.getUsers(username, minAge, maxAge, user_id);
     } catch (e) {
       throw e;
     }
