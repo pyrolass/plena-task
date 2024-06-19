@@ -5,17 +5,19 @@ import { User } from 'src/schemas/User.schema';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { SignInRequestDto, SignInResponseDto } from './dto/SignInDto';
+import { UpdateUserDto } from './dto/UpdateUserDto';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User.name) private merchantModel: Model<User>,
+    @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
   ) {}
 
   async signIn(signInRequestDto: SignInRequestDto): Promise<SignInResponseDto> {
-    const user = await this.merchantModel.findOne({
+    const user = await this.userModel.findOne({
       username: signInRequestDto.username,
+      is_delete: false,
     });
 
     if (!user) {
@@ -26,8 +28,7 @@ export class UserService {
     }
 
     const token = this.jwtService.sign({
-      id: user._id,
-      name: user.username,
+      user_id: user._id,
     });
 
     return {
@@ -38,8 +39,9 @@ export class UserService {
   }
 
   async signUp(signUpRequestDto: SignUpRequestDto): Promise<SignUpResponseDto> {
-    const user = await this.merchantModel.findOne({
+    const user = await this.userModel.findOne({
       username: signUpRequestDto.username,
+      is_delete: false,
     });
 
     if (user) {
@@ -49,11 +51,10 @@ export class UserService {
       );
     }
 
-    const newUser = await this.merchantModel.create(signUpRequestDto);
+    const newUser = await this.userModel.create(signUpRequestDto);
 
     const token = this.jwtService.sign({
-      id: newUser._id,
-      name: newUser.username,
+      user_id: newUser._id,
     });
 
     return {
@@ -61,5 +62,27 @@ export class UserService {
       username: newUser.username,
       token: token,
     };
+  }
+
+  async updateUser(updateUserDto: UpdateUserDto, user_id: string) {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      user_id,
+      { $set: updateUserDto },
+      { new: true },
+    );
+
+    return updatedUser;
+  }
+
+  async deleteUser(user_id: string) {
+    return this.userModel.findByIdAndUpdate(
+      user_id,
+      {
+        $set: {
+          is_delete: true,
+        },
+      },
+      { new: true },
+    );
   }
 }
