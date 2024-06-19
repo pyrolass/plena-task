@@ -103,4 +103,69 @@ export class UserService {
       $addToSet: { blocked_users: blockUserDto.user_id },
     });
   }
+
+  async unblockUser(blockUserDto: BlockUserDto, user_id: string) {
+    const user = await this.userModel.findById(blockUserDto.user_id);
+
+    if (!user) {
+      throw new HttpException('No user found to unblock', HttpStatus.NOT_FOUND);
+    }
+
+    return await this.userModel.findByIdAndUpdate(user_id, {
+      $pull: { blocked_users: blockUserDto.user_id },
+    });
+  }
+
+  async getUser(username: string, minAge: number, maxAge: number) {
+    const currentDate = new Date();
+    const pipeline = [];
+
+    if (username) {
+      pipeline.push({
+        $match: {
+          username: { $regex: username, $options: 'i' },
+        },
+      });
+    }
+
+    // this pipeline create an age field for ease of calculation on the other pipe
+    pipeline.push({
+      $addFields: {
+        age: {
+          $floor: {
+            $divide: [
+              { $subtract: [currentDate, '$birthdate'] },
+              365 * 24 * 60 * 60 * 1000,
+            ],
+          },
+        },
+      },
+    });
+
+    if (minAge && !maxAge) {
+      pipeline.push({
+        $match: {
+          age: { $gte: minAge * 1 },
+        },
+      });
+    }
+
+    if (maxAge && !minAge) {
+      pipeline.push({
+        $match: {
+          age: { $lte: maxAge * 1 },
+        },
+      });
+    }
+
+    if (minAge && maxAge) {
+      pipeline.push({
+        $match: { age: { $gte: minAge * 1, $lte: maxAge * 1 } },
+      });
+    }
+
+    const users = await this.userModel.aggregate(pipeline).exec();
+
+    return { users };
+  }
 }

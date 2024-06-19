@@ -2,8 +2,10 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -17,6 +19,19 @@ import { BlockUserDto } from './dto/BlockUserDto';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get('/search')
+  handleGet(
+    @Query('username') username: string,
+    @Query('min_age') minAge: number,
+    @Query('max_age') maxAge: number,
+  ) {
+    try {
+      return this.userService.getUser(username, minAge, maxAge);
+    } catch (e) {
+      throw e;
+    }
+  }
 
   @Post('/sign_in')
   handleSignIn(@Body() signInRequestDto: SignInRequestDto) {
@@ -56,6 +71,21 @@ export class UserController {
 
       return {
         message: `user ${blockUserDto.user_id} blocked`,
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Patch('/unblock_user')
+  @UseGuards(AuthGuard)
+  handleUnBlockUser(@Body() blockUserDto: BlockUserDto, @Request() req) {
+    const { user_id } = req.user;
+    try {
+      this.userService.unblockUser(blockUserDto, user_id);
+
+      return {
+        message: `user ${blockUserDto.user_id} unblocked`,
       };
     } catch (e) {
       throw e;
