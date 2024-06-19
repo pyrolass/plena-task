@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { SignInRequestDto, SignInResponseDto } from './dto/SignInDto';
 import { UpdateUserDto } from './dto/UpdateUserDto';
+import { BlockUserDto } from './dto/BlockUserDto';
 
 @Injectable()
 export class UserService {
@@ -67,7 +68,7 @@ export class UserService {
   async updateUser(updateUserDto: UpdateUserDto, user_id: string) {
     const updatedUser = await this.userModel.findByIdAndUpdate(
       user_id,
-      { $set: updateUserDto },
+      { $set: updateUserDto, updated_at: Date.now() },
       { new: true },
     );
 
@@ -80,9 +81,26 @@ export class UserService {
       {
         $set: {
           is_delete: true,
+          updated_at: Date.now(),
         },
       },
       { new: true },
     );
+  }
+
+  async blockUser(blockUserDto: BlockUserDto, user_id: string) {
+    if (blockUserDto.user_id === user_id) {
+      throw new HttpException('Cannot block yourself', HttpStatus.BAD_REQUEST);
+    }
+
+    const user = await this.userModel.findById(blockUserDto.user_id);
+
+    if (!user) {
+      throw new HttpException('no user found to block', HttpStatus.NOT_FOUND);
+    }
+
+    return await this.userModel.findByIdAndUpdate(user_id, {
+      $addToSet: { blocked_users: blockUserDto.user_id },
+    });
   }
 }

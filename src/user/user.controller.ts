@@ -12,6 +12,7 @@ import { UserService } from './user.service';
 import { SignInRequestDto } from './dto/SignInDto';
 import { UpdateUserDto } from './dto/UpdateUserDto';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { BlockUserDto } from './dto/BlockUserDto';
 
 @Controller('user')
 export class UserController {
@@ -41,6 +42,21 @@ export class UserController {
     const { user_id } = req.user;
     try {
       return this.userService.updateUser(updateUserDto, user_id);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Patch('/block_user')
+  @UseGuards(AuthGuard)
+  handleBlockUser(@Body() blockUserDto: BlockUserDto, @Request() req) {
+    const { user_id } = req.user;
+    try {
+      this.userService.blockUser(blockUserDto, user_id);
+
+      return {
+        message: `user ${blockUserDto.user_id} blocked`,
+      };
     } catch (e) {
       throw e;
     }
